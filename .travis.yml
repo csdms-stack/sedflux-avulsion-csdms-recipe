@@ -4,10 +4,10 @@ os:
 - osx
 env:
   global:
-  - THIS_PACKAGE="csdms-sedflux-avulsion"
+  - CONDA_PREFIX=$HOME/miniconda
+  - MINICONDA_URL_BASE="https://repo.continuum.io/miniconda/Miniconda2-latest"
   - TRAVIS_PYTHON_VERSION="2.7"
-  - NUMPY_VERSION="1.9"
-  - secure: NJum/OzzKW42BzxPRpcdkp3CzSkmwtaHBZNSjjPQlFwt0HSQvdabSSEmKLNqVDl1I7Kxp3BzNhOqSiUuH6yb0d3W5hIFdZcKkUP28AjV12b2dX64KVZm4DHzwdxE6tAFvFI6ROweQ4NEzB7XBwiaICGNvrZZBSdi5l84uO7fTivHctTztor0APu2Xg9CLPK1YZbvDvYA1qVZEHEPGDtc/ItHXqGFYBQEXHeZr76P116Pv4By6jm8Q4Nqzksj1bhgfeXatEerFDcXGlI4zlcPiySvapDxGb3iqiLt+4D0xPKnxx7DVXjMekk6dP9EtQTYl1I50GWHIUIMIUSbGQOfDlglPY8UWwcZDbWtEv9BZzXrfRTabyX1pjgVp/eCvNk5Q0LzsjT536520fGFu6BOpbxtnanhP8Bhqn54u9R48IUlxPr7WF1ia1i0dagx7KoI3hWp6P4gD5nQsKjpHXWD5+K8PizEuNu9sqW9TaGC+gSzESUvfsTgqoACrEoXNWOe5Qt5oxiKVj7pNKqCMaxllQ/MHUKlAKCHmhrrMey/9nf/x8sNlQpeCmlWYhyXjE6VE6X9Pl5oBnUiZmknoEp7eQdK28NhWok9JkKFSbyh1aSlXwhZ03uL9fShkaJtZfeunSG1TwF0xH4uKKgrvsFbllJNhOmXpoS3giMDJafQVGs=
+  - secure: JpeG3zwxOh3KTB/N5c/uGay4uv5zZ3Q4NDZW4iVUDv89J6inNfWowBxx21FoUO4FZC+QidfiRV4Q7vQrK1SMjLbxdFzXJQR/VDAxedtPu81VbLkEM9Zy54IYXzqqNIw6juCPvb1md/WL5Z/2aIUTa2c7wKfXXyWSugNqvORVTpMUmYJoKEWBJwYEADUAeqthajRyx6q3BZuhv8QljK+vXtHKh5DdgqHg1sDAPzTCUAn5WnpgCZh/0soqXLEDtdOVyMaWsAHBFm3D8CSmlVtZMoGp26mIbo7sDgTlb8Q82vantfRqzDKSqazUF/LbjK2qovZIdtTIflOLuGgjcvK92Btyj3LqiXKLMf6kRnACKg/KX2I+fN+gvTdUwvKzTJYAJkUgatFDZF9Pck3UnNp1D9NWSPQcXz0NKdrVJ/pAqf78SkNLjGkRiZUaEAiPKNLlnPHH1DorqIY81wJhvVkjlclEaMhOw0oSUbh2LnWwLSmCU6k8seNhjnH9kdkBsq3N3Xa0FY0r9Qm7l83CC/3vfqpc7ZKtTFp8YvM+Bd6KHJGt2FfFtEBJdEKRWAneqwSAmapuBjyMII9MtV7WJ7gknvUm67vg3o5mgM4TszLtJIkn0PQGk/5my/+sRBfMafB8YMw5rs5yaz77E0fOfkBcTwd5tn7KeQR+nLBBlsg5Arw=
 sudo: false
 before_install:
 - |
@@ -17,10 +17,23 @@ before_install:
     rm -rf $(brew --cache)
   fi
 install:
-- bash ci/travis/install_python.sh $HOME/miniconda
-- export PATH="$HOME/miniconda/bin:$PATH"
+- |
+  if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+    OS="MacOSX-x86_64"
+  else
+    OS="Linux-x86_64"
+  fi
+- curl $MINICONDA_URL_BASE-$OS.sh > $HOME/minconda.sh
+- bash $HOME/minconda.sh -b -p $CONDA_PREFIX
+- export PATH="$CONDA_PREFIX/bin:$PATH"
+- hash -r
+- conda config --set always_yes yes --set changeps1 no
+- conda install python=$TRAVIS_PYTHON_VERSION
+- conda install -q conda-build anaconda-client coverage sphinx
 script:
-- conda build recipe -c conda-forge -c csdms-stack
+- conda build ./recipe -c csdms-stack -c conda-forge
 after_success:
-- if [[ $TRAVIS_BRANCH == "master" ]]; then export CHANNEL="main"; fi
-- bash ci/travis/deploy_to_anaconda.sh $THIS_PACKAGE
+- curl https://raw.githubusercontent.com/csdms/ci-tools/master/anaconda_upload.py
+  > $HOME/anaconda_upload.py
+- echo $ANACONDA_TOKEN | python $HOME/anaconda_upload.py ./recipe --channel=main --org=csdms-stack
+  --token=-
