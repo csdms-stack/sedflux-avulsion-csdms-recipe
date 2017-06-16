@@ -5,7 +5,7 @@
 
 # Current Build Status
 
-Linux, OSX: [![Build Status](https://travis-ci.org/csdms-stack/csdms-sedflux-avulsion-recipe.svg?branch=master)](https://travis-ci.org/csdms-stack/csdms-sedflux-avulsion-recipe)
+Linux, OSX: [![Build Status](https://travis-ci.org/csdms-stack/sedflux-avulsion-csdms-recipe.svg?branch=master)](https://travis-ci.org/csdms-stack/sedflux-avulsion-csdms-recipe)
 
 # About csdms-sedflux-avulsion
 
